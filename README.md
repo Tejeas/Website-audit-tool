@@ -4,8 +4,6 @@ An AI-powered single-page website auditing tool built for the EIGHT25MEDIA engin
 
 The system is designed to support external LLM integration (e.g., Claude), but currently uses a dynamic rule-based analysis module to ensure the application runs without external API dependencies.
 
-**Live demo:** `https://your-deployment-url.vercel.app`
-
 ---
 
 ## What It Does
