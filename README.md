@@ -20,7 +20,7 @@ The system is designed to support external LLM integration (e.g., Claude), but c
 ## Quickstart (Local)
 
 ```bash
-git clone https://github.com/yourusername/website-audit-tool
+git clone https://github.com/Tejeas/website-audit-tool
 cd website-audit-tool
 
 npm install
