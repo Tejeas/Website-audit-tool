@@ -37,17 +37,19 @@ npm run dev
 
 ---
 
-## Deploy to Vercel (Recommended)
+## Deploy to Vercel (Optional)
 
-```bash
-npm install -g vercel
-vercel
-# Follow prompts, then add env var:
-vercel env add ANTHROPIC_API_KEY
-vercel --prod
-```
+The application can be deployed using platforms like Vercel.
 
-Or: Import the repo directly at [vercel.com/new](https://vercel.com/new) and add `ANTHROPIC_API_KEY` in Project Settings → Environment Variables.
+Since the current version does not rely on external APIs, no environment variables are required.
+
+Steps:
+1. Push the repository to GitHub
+2. Import the project into Vercel
+3. Deploy
+
+The app should run without additional configuration.
+
 
 ---
 
