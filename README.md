@@ -1,40 +1,205 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
+# PageAudit — AI Website Audit Tool
 
-## Getting Started
+An AI-powered single-page website auditing tool built for the EIGHT25MEDIA engineering assessment. Extracts factual metrics from any public URL, then generates structured, metric-grounded insights and recommendations using a modular AI analysis layer.
 
-First, run the development server:
+The system is designed to support external LLM integration (e.g., Claude), but currently uses a dynamic rule-based analysis module to ensure the application runs without external API dependencies.
+
+**Live demo:** `https://your-deployment-url.vercel.app`
+
+---
+
+## What It Does
+
+- Enter a website URL  
+- The system extracts key data like word count, headings, links, images, and meta tags  
+- Then it analyzes the data and generates insights  
+- Finally, it shows everything in a simple dashboard  
+
+---
+
+## Quickstart (Local)
 
 ```bash
+git clone https://github.com/yourusername/website-audit-tool
+cd website-audit-tool
+
+npm install
+
+# Set your API key
+cp .env.example .env.local
+# Optional: Add ANTHROPIC_API_KEY if integrating a real AI API
+
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Open http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+**Requirements:** Node.js 18+ (Next.js 14 requirement)
 
-You can start editing the page by modifying `pages/index.js`. The page auto-updates as you edit the file.
+---
 
-[API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.js`.
+## Deploy to Vercel (Recommended)
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) instead of React pages.
+```bash
+npm install -g vercel
+vercel
+# Follow prompts, then add env var:
+vercel env add ANTHROPIC_API_KEY
+vercel --prod
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Or: Import the repo directly at [vercel.com/new](https://vercel.com/new) and add `ANTHROPIC_API_KEY` in Project Settings → Environment Variables.
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## Architecture
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn-pages-router) - an interactive Next.js tutorial.
+```
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                   Next.js App                                                │
+│                                                                              │
+│  pages/index.js          ← React UI (client)                                 │
+│  pages/api/audit.js      ← API Route (server)                                │
+│     │                                                                        │
+│     ├── lib/scraper.js   ← HTML parsing (cheerio)                            │
+│     │        │                                                               │
+│     │    factual metrics (no AI)                                             │
+│     │                                                                        │
+│     └── lib/aiAnalyzer.js ← AI analysis module  (mock AI / LLM-ready)        │
+│              │                                                               │
+│          structured JSON insights                                            │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+## AI Analysis Approach
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The system is designed with a modular AI analysis layer that can be connected to an external AI model (such as Claude).
 
-## Deploy on Vercel
+Due to time and API cost constraints, I implemented a rule-based analysis module instead. This module uses the extracted metrics (word count, headings, CTAs, etc.) to generate structured insights and recommendations.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+This approach keeps the application fully runnable without external dependencies while still demonstrating how the system would work with a real AI model.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
+The design also allows future integration with an actual AI API without major changes.
+
+### Data Flow
+
+```
+User enters URL
+    │
+    ▼
+POST /api/audit
+    │
+    ├─► scraper.js → axios.get(url) → cheerio parse
+    │      └─► { metrics, contentData }
+    │
+    └─► aiAnalyzer.js → local AI analysis module (mock AI)
+           ├─► buildUserPrompt(metrics, contentData)
+           └─► { analysis, promptLog }
+    │
+    ▼
+Response: { url, timestamp, metrics, analysis, promptLog }
+    │
+    ▼
+UI renders metrics + AI insights separately
+```
+
+---
+
+## What Gets Extracted (Scraper — No AI)
+
+| Metric | Method |
+|--------|--------|
+| Word count | Body text after stripping script/style/nav/footer |
+| H1 / H2 / H3 counts | `$('h1').length` etc. via cheerio |
+| CTAs | Buttons + submit inputs + `<a>` with CTA text patterns |
+| Internal links | Same hostname as target URL |
+| External links | Different hostname |
+| Images + missing alt | `$('img')` → check `alt` attr presence |
+| Meta title | `<title>` tag |
+| Meta description | `<meta name="description">` or OG fallback |
+
+---
+
+---
+
+## Trade-offs
+
+- Used a rule-based analysis instead of a real AI API to avoid cost and setup issues  
+- The scraper uses static HTML, so it may not work well for heavily dynamic websites  
+- Only supports single-page analysis to keep the scope manageable within 24 hours  
+
+---
+
+## What I'd Improve With More Time
+
+- Integrate a real AI API for more advanced insights  
+- Support multi-page website analysis  
+- Improve handling of JavaScript-heavy sites  
+- Add better UI/UX and visualizations  
+- Store previous audits for comparison  
+
+---
+
+## Project Structure
+
+```
+website-audit-tool/
+├── lib/
+│   ├── scraper.js          # URL fetching + HTML metric extraction
+│   └── aiAnalyzer.js       # Analysis logic (mock AI / LLM-ready) + structured output
+├── pages/
+│   ├── _app.js             # Global styles wrapper
+│   ├── index.js            # Main UI (React)
+│   └── api/
+│       └── audit.js        # POST endpoint — orchestrates scrape + AI
+├── styles/
+│   └── globals.css         # Tailwind + custom animations
+├── PROMPT_LOGS.md          # Example prompt logs with real output
+├── .env.example            # API key template
+└── README.md
+```
+
+---
+
+Note: The current implementation uses a local analysis module instead of a live AI API. The response structure is designed to support future integration with external AI services.
+
+## API Reference
+
+**`POST /api/audit`**
+
+```json
+// Request
+{ "url": "https://example.com" }
+
+// Response shape
+{
+  "url": "https://example.com",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "metrics": {
+    "wordCount": 1240,
+    "headings": { "h1": 1, "h2": 8, "h3": 12 },
+    "ctaCount": 6,
+    "links": { "internal": 24, "external": 3 },
+    "images": { "total": 14, "missingAlt": 3, "missingAltPercent": 21 },
+    "meta": { "title": "...", "titleLength": 58, "description": "...", "descriptionLength": 145 }
+  },
+  "analysis": {
+    "overallScore": 7,
+    "executiveSummary": "...",
+    "insights": {
+      "seoStructure": { "score": 8, "summary": "...", "issues": [] },
+      "messagingClarity": { "score": 6, "summary": "...", "issues": [] },
+      "ctaUsage": { "score": 7, "summary": "...", "issues": [] },
+      "contentDepth": { "score": 5, "summary": "...", "issues": [] },
+      "uxConcerns": { "score": 7, "summary": "...", "issues": [] }
+    },
+    "recommendations": [
+      { "priority": 1, "title": "...", "reasoning": "...", "impact": "high", "effort": "low" }
+    ]
+  },
+  "promptLog": {
+    "model": "mock-analysis-module",
+    "note": "Analysis generated locally without external API",
+    "timestamp": "2024-01-15T10:30:00Z"
+}
+  }
+}
+```
